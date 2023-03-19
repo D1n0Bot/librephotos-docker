@@ -13,6 +13,7 @@ services:
     image: reallibrephotos/librephotos-proxy:${tag}
     container_name: proxy
     restart: unless-stopped
+    user: "${UID}:${GID}"
     volumes:
       - ${scanDirectory}:/data
       - ${data}/protected_media:/protected_media
@@ -30,8 +31,10 @@ services:
       - POSTGRES_USER=${dbUser}
       - POSTGRES_PASSWORD=${dbPass}
       - POSTGRES_DB=${dbName}
+      - TZ=${Timezone}
+      - PGTZ=${Timezone}
     volumes:
-      - ${data}/db:/var/lib/postgresql/data
+      - ${dbLocation}/db:/var/lib/postgresql/data
     command: postgres -c fsync=off -c synchronous_commit=off -c full_page_writes=off -c random_page_cost=1.0
     healthcheck:
       test: psql -U ${dbUser} -d ${dbName} -c "SELECT 1;"
@@ -48,6 +51,7 @@ services:
     image: reallibrephotos/librephotos:${tag}
     container_name: backend
     restart: unless-stopped
+    user: "${UID}:${GID}"
     volumes:
       - ${scanDirectory}:/data
       - ${data}/protected_media:/protected_media
@@ -73,6 +77,7 @@ services:
       - ALLOW_UPLOAD=${allowUpload:-false}
       - DEBUG=0
       - HEAVYWEIGHT_PROCESS=${HEAVYWEIGHT_PROCESS:-}
+      - TZ=${Timezone}
     depends_on:
       db:
         condition: service_healthy
